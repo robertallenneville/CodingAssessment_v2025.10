@@ -1,2 +1,9 @@
 # Can be edited using https://www.toptal.com/developers/gitignore?templates=java,csharp,node,ruby
 pickup
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
