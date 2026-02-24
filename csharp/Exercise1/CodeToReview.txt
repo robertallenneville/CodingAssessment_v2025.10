@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Review
 {
-    public class People
+	public class People
     {
-        private static readonly DateTimeOffset Under16 = DateTimeOffset.UtcNow.AddYears(-15);
-        public string Name { get; private set; }
-        public DateTimeOffset DOB { get; private set; }
+        private static readonly DateTimeOffset Under16 = DateTimeOffset.UtcNow.AddYears(-15); // Readonly value is calculated at startup. If the year ticks over when this App is running then this is wrong.
+        public string Name { get; private set; } // Is this required? A null value could be used here.
+        public DateTimeOffset DOB { get; private set; } // Change to a DateTime. Thats what is in the constructor.
 
         public People(string name) : this(name, Under16.Date) { }
 
@@ -23,57 +23,112 @@ namespace Review
 
     public class BirthingUnit
     {
+		// More details please. This summary looks wrong. See comment below thise  block for help.
         /// <summary>
         /// MaxItemsToRetrieve
         /// </summary>
         private List<People> _people;
+		
+		/*
+         A summary is information of what a method or class does. It doesn't
+		 have to be extensive but it should give enopugh information for 
+		 someone else to come along and know what a class or method does.
+		 
+        E.g.
+        /// <summary>
+        /// This creates and returns a list of Person objects.
+        /// </summary>
+        /// <param name="i">The number of people we will be adding to the list.</param>
+        /// <returns>A list of Person Objects. <see cref="Person" />  </returns>
+
+        */
 
         public BirthingUnit() {
             _people = new List<People>();
         }
 
+		// More details. Fix the names, they are wrong.
         /// <summary>
         /// GetPeoples
         /// </summary>
-        /// <param name="j"></param>
-        /// <returns>List<object></returns>
-        public List<People> GetPeople(int i)
+        /// <param name="j"></param>			// Should be i
+        /// <returns>List<object></returns>		// Give description, not what it is. Also, it is not a List<object>
+        public List<People> GetPeople(int i)	// Name doesnt match function. It doesnt get anything. It creates a list of people and returns it. CreatePeopleList would be better.
         {
             for (int j = 0; j < i; j++) {
                 try
                 {
-                    // Creates a dandon Name
+                    // Creates a dandon Name		// fix spelling mistake.
                     string name = string.Empty;
                     var random = new Random();
-                    if (random.Next(0, 1) == 0) {
+					
+					// A random in a loop will probably use the same seed giving the same results. There are only two options. If you truely want it to be random
+                    // then move the Random out of the loop so it is forced to create a new seed every time the method is called.
+                    if (random.Next(0, 1) == 0) { // This always returns 0. The number on the right is exclusive. Use radnom.Next(0,2)
                         name = "Bob";
                     }
                     else { name = "Betty"; }
-                    // Adds new people to the list
-                    _people.Add(new People(name, DateTime.UtcNow.Subtract(new TimeSpan(random.Next(18, 85) * 356, 0, 0, 0))));
+                    // Adds new people to the list		// Is the intention to keep adding to the global list or is it to retunr a new list everytime this method is called. 
+														// Right now every call will add to the list. So calling GetPeople(5) twice will result in a list with 10 values.
+					// redo. Even if this was right it doesnt take into account leap years.
+					// Try something that gets the two dates from 18 and 86 take away one day (85 and 364 days) and then gets a date by randomising from the two values.
+                    _people.Add(new People(name, DateTime.UtcNow.Subtract(new TimeSpan(random.Next(18, 85) * 356, 0, 0, 0))));	// A year has 365 in it not including
                 }
                 catch (Exception e)
                 {
-                    // Dont think this should ever happen
-                    throw new Exception("Something failed in user creation");
+                    // Dont think this should ever happen		// remove this. it isnt constructive.
+                    throw new Exception("Something failed in user creation");	// you need to add the throwm exception to this exception you are creating otherwise it is lost.
                 }
             }
             return _people;
         }
 
+		// what does this do?
         private IEnumerable<People> GetBobs(bool olderThan30) {
-            return olderThan30 ? _people.Where(x => x.Name == "Bob" && x.DOB >= DateTime.Now.Subtract(new TimeSpan(30 * 356, 0, 0, 0))) : _people.Where(x => x.Name == "Bob");
+			/redo this. a year isnt 365 days. Get a value for 30 years old today and then use that value below.
+            return olderThan30 ? _people.Where(x => x.Name == "Bob" && x.DOB >= DateTime.Now.Subtract(new TimeSpan(30 * 356, 0, 0, 0))) : _people.Where(x => x.Name == "Bob"); 
         }
 
-        public string GetMarried(People p, string lastName)
+		//what does this do?
+        public string GetMarried(People p, string lastName) //theres no need to have the whole class as a parameter, the Person.Name as a string is fine.
         {
+			// what about null values? Empty values?
             if (lastName.Contains("test"))
                 return p.Name;
             if ((p.Name.Length + lastName).Length > 255) {
-                (p.Name + " " + lastName).Substring(0, 255);
+                (p.Name + " " + lastName).Substring(0, 255);		// this is never returned.
             }
 
             return p.Name + " " + lastName;
         }
     }
 }
+
+/*
+    * General comments. 
+    - The summaries are incomplete and might as wel lnot be there. I do not think they describe what the functions are. The private List<People> _people for example tells me that it is MaxItemsToRetrieve. 
+        That doesnt look as though thats what it does. It looks as it is a list of People that is created and then returned to the caller.
+        Personally I prefer to have a summary over each class as well as methods. This can help when another user is looking at this and needs to understand it or make changes.
+    - The name of classes don't really make sense. People describes a singular instance nad _people describe 1 or more. It makes more sense for People to be called Person.
+    - Formatting is inconsistant throughout. Sometime it is all on one line. Other times it is on multiple lines. Brackets are inconsistent. 
+        Sometimes is left bracket same line and then right bracket has its own line oither times it is left and right bracket on their own line which is the traditional way C# is written.
+
+    * Code smell 
+    Im going to ignore that the People class doesnt seem to be fleshed out properly and I hope I caught all of the defects.
+    - The People class should be renamed and the Dob should be a DateTime. I get that some of the methods are trying to work out Dob using todays date and TimeSpan but mistakes have be introduced and it's not accurate because of leap years.
+    - The BirthingUnit class is doing too much. A class should be ideally have one responsibility. This class generates fake data, stores state, and applies business logic. These three things should be seperated out into their own class. 
+    - Random is not so random when it is created in the wrong place. I also think the whole block could be redone. Randomising two options doestn seem necessary. We could just as easily alternate between the two. This would be discussed with the Dev.
+    - _people will grow every time the method GetPeople is called. Its a variable that is called globally for the class. If not intended then a more localised vaible inside the method should be created and used. Or there should be a _people.Clear(); line.
+
+    The codesmell that concerns me the most is the BirthUnit class with multiple responsibilites.
+    - A lot of issues raised would be solved before the code reaches review. Theres errors that an IDE should pick up and others where testing would pick up.
+    - BirthUnit needs to be refactored into other classes. I IDed three things it was trying to do so we could seperate into maybe a business logic class, data class, and a state class.
+        The reason why this is an issue is that it becomes harder to maintain a class if its responsibilites are mixed. This introduces unneeded complexities that can lead to hard
+        to find defects. 
+
+    * Questions I would ask
+    - Can you run me through what you expect the code to do.
+    - What made you choose <X> instead of <Y> (When getting to something I think could be done better.)
+    - Have you publishsed test results and can I see them? 
+    - Do your changes match what is in the requirements? Can you show me?
+	*/
